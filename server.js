@@ -47,5 +47,17 @@ app.post("/api/enquiry", (req, res) => {
   res.status(201).json({ message: "Thank you! Your message has been received. We will get back to you soon." });
 });
 
+/* Admin view of stored data (protected by a secret key set in ADMIN_KEY) */
+app.get("/api/admin/data", (req, res) => {
+  const key = process.env.ADMIN_KEY || "";
+  if (!key || req.query.key !== key) return res.status(403).json({ message: "Access denied." });
+  const users = read(USERS).map(u => ({
+    id: u.id, name: u.name, email: u.email,
+    password: u.password.slice(0, 12) + "... (bcrypt hash)",
+    createdAt: u.createdAt
+  }));
+  res.json({ users, enquiries: read(ENQ) });
+});
+
 app.use(express.static(path.join(__dirname, "public")));
 app.listen(PORT, () => console.log("Car Dhundho running at http://localhost:" + PORT));
